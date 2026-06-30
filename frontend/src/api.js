@@ -14,12 +14,18 @@ async function request(path, options = {}) {
     throw new Error("The scraping service is unavailable. Check that the backend is running.");
   }
 
-  const data = await response.json().catch(() => ({}));
+  const text = await response.text().catch(() => "");
+  let data = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = {};
+  }
   if (!response.ok) {
     const detail = Array.isArray(data.detail)
       ? data.detail.map((item) => item.msg).join(" ")
       : data.detail;
-    throw new Error(detail || "The request could not be completed.");
+    throw new Error(detail || text || `The request failed with status ${response.status}.`);
   }
   return data;
 }

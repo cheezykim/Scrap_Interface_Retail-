@@ -78,6 +78,21 @@ class ApiTests(unittest.TestCase):
         with patch.dict("os.environ", {"SERVERLESS_SYNC_JOBS": "true"}):
             self.assertTrue(run_jobs_immediately())
 
+    def test_reports_configuration_error_as_json(self):
+        with patch.dict("os.environ", {}, clear=True):
+            with TestClient(create_app()) as client:
+                response = client.post(
+                    "/api/jobs",
+                    json={
+                        "links": ["https://t.me/example"],
+                        "start_date": "2026-06-01T00:00:00",
+                        "end_date": "2026-06-02T00:00:00",
+                    },
+                )
+
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Backend configuration error", response.json()["detail"])
+
 
 if __name__ == "__main__":
     unittest.main()

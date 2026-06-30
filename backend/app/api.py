@@ -78,25 +78,29 @@ def create_app(manager: JobManager | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         active_manager = manager
+        app.state.configuration_error = None
         if active_manager is None:
             remove_dead_local_proxy()
             try:
                 settings = Settings.from_env()
             except ConfigurationError as exc:
-                raise RuntimeError(f"Backend configuration error: {exc}") from exc
-            active_manager = JobManager(
-                TelegramScraper(settings),
-                GoogleSheetsWriter(settings),
-                max_links=settings.max_links,
-                timezone_name=settings.timezone,
-            )
+                app.state.configuration_error = str(exc)
+            else:
+                active_manager = JobManager(
+                    TelegramScraper(settings),
+                    GoogleSheetsWriter(settings),
+                    max_links=settings.max_links,
+                    timezone_name=settings.timezone,
+                )
 
         app.state.job_manager = active_manager
-        await active_manager.start()
+        if active_manager is not None:
+            await active_manager.start()
         try:
             yield
         finally:
-            await active_manager.stop()
+            if active_manager is not None:
+                await active_manager.stop()
 
     app = FastAPI(
         title="Retail Banking Scraper API",
@@ -113,6 +117,12 @@ def create_app(manager: JobManager | None = None) -> FastAPI:
 
     @app.get("/api/health")
     async def health(request: Request) -> dict[str, str]:
+        if request.app.state.configuration_error:
+            return {
+                "status": "misconfigured",
+                "worker": "not-ready",
+                "detail": request.app.state.configuration_error,
+            }
         return {"status": "ok", "worker": "ready"}
 
     @app.post(
@@ -121,6 +131,17 @@ def create_app(manager: JobManager | None = None) -> FastAPI:
         status_code=status.HTTP_202_ACCEPTED,
     )
     async def create_job(payload: JobCreateRequest, request: Request):
+        if request.app.state.configuration_error or request.app.state.job_manager is None:
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "Backend configuration error: "
+                    + (
+                        request.app.state.configuration_error
+                        or "job manager is not available"
+                    )
+                ),
+            )
         try:
             job = await request.app.state.job_manager.submit(
                 payload.links,
