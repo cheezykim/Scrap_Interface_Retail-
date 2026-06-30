@@ -63,6 +63,15 @@ function StatusPill({ status }) {
   return <span className={`status-pill status-${status || "ready"}`}>{label}</span>;
 }
 
+function isJobResponse(value) {
+  return Boolean(
+    value &&
+    typeof value === "object" &&
+    typeof value.id === "string" &&
+    Array.isArray(value.links),
+  );
+}
+
 function App() {
   const defaults = useMemo(initialDates, []);
   const [links, setLinks] = useState(initialLinks);
@@ -122,6 +131,12 @@ function App() {
         start_date: new Date(startDate).toISOString(),
         end_date: new Date(endDate).toISOString(),
       });
+      if (!isJobResponse(created)) {
+        const detail = created?.detail
+          ? ` ${created.detail}`
+          : " The backend returned health information instead of a scraping job.";
+        throw new Error(`The scraping request did not start.${detail}`);
+      }
       setJob(created);
       setNotice({ type: "info", text: "Your scraping job has been added to the queue." });
     } catch (submitError) {
@@ -264,7 +279,7 @@ function App() {
               </div>
               <div className="progress-track"><span style={{ width: `${job.progress}%` }} /></div>
               <div className="stat-grid">
-                <div><span>Sources</span><strong>{job.links.length}</strong></div>
+                <div><span>Sources</span><strong>{job.links?.length || 0}</strong></div>
                 <div><span>Records found</span><strong>{job.records_found}</strong></div>
                 <div><span>Rows added</span><strong>{job.rows_appended}</strong></div>
                 <div><span>Duplicates</span><strong>{job.duplicates_skipped}</strong></div>
