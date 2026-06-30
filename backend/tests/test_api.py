@@ -55,9 +55,11 @@ class ApiTests(unittest.TestCase):
 
         root_response = self.client.post("/", json=payload)
         jobs_response = self.client.post("/jobs", json=payload)
+        health_post_response = self.client.post("/api/health", json=payload)
 
         self.assertEqual(root_response.status_code, 202)
         self.assertEqual(jobs_response.status_code, 202)
+        self.assertEqual(health_post_response.status_code, 202)
 
     def test_reads_health_on_vercel_stripped_path(self):
         response = self.client.get("/")

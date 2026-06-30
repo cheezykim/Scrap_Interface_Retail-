@@ -35,10 +35,10 @@ async function request(path, options = {}, fallbackPaths = []) {
 }
 
 export function submitJob(payload) {
-  return request("/api/jobs", {
+  return request("/api/health", {
     method: "POST",
     body: JSON.stringify(payload),
-  }, ["/api/jobs.py", "/api"]);
+  }, ["/api/jobs", "/api/jobs.py", "/api"]);
 }
 
 export function getJob(jobId) {

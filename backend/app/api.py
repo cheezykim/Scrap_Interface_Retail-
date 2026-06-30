@@ -154,6 +154,16 @@ def create_app(manager: JobManager | None = None) -> FastAPI:
         status_code=status.HTTP_202_ACCEPTED,
     )
     @app.post(
+        "/api/health",
+        response_model=JobResponse,
+        status_code=status.HTTP_202_ACCEPTED,
+    )
+    @app.post(
+        "/api/health.py",
+        response_model=JobResponse,
+        status_code=status.HTTP_202_ACCEPTED,
+    )
+    @app.post(
         "/api/jobs",
         response_model=JobResponse,
         status_code=status.HTTP_202_ACCEPTED,
