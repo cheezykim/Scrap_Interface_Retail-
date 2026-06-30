@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+from urllib.parse import quote
 from unittest.mock import patch
 import unittest
 
@@ -60,6 +61,18 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(root_response.status_code, 202)
         self.assertEqual(jobs_response.status_code, 202)
         self.assertEqual(health_post_response.status_code, 202)
+
+    def test_submits_job_from_health_get_payload_for_vercel(self):
+        payload = (
+            '{"links":["https://t.me/example"],'
+            '"start_date":"2026-06-01T00:00:00",'
+            '"end_date":"2026-06-02T00:00:00"}'
+        )
+
+        response = self.client.get(f"/api/health?job_payload={quote(payload)}")
+
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()["links"], ["https://t.me/example"])
 
     def test_reads_health_on_vercel_stripped_path(self):
         response = self.client.get("/")

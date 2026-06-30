@@ -5,7 +5,7 @@ from datetime import datetime
 import os
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -115,11 +115,44 @@ def create_app(manager: JobManager | None = None) -> FastAPI:
         allow_headers=["Content-Type"],
     )
 
+    async def submit_job(payload: JobCreateRequest, request: Request):
+        if request.app.state.configuration_error or request.app.state.job_manager is None:
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "Backend configuration error: "
+                    + (
+                        request.app.state.configuration_error
+                        or "job manager is not available"
+                    )
+                ),
+            )
+        try:
+            job = await request.app.state.job_manager.submit(
+                payload.links,
+                payload.start_date,
+                payload.end_date,
+                run_immediately=run_jobs_immediately(),
+            )
+        except ScrapeInputError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        return job.as_dict()
+
     @app.get("/")
     @app.get("/health")
     @app.get("/api/health.py")
     @app.get("/api/health")
-    async def health(request: Request) -> dict[str, str]:
+    async def health(request: Request, response: Response) -> dict[str, Any]:
+        payload = request.query_params.get("job_payload")
+        if payload:
+            try:
+                response.status_code = status.HTTP_202_ACCEPTED
+                return await submit_job(JobCreateRequest.model_validate_json(payload), request)
+            except ValueError as exc:
+                raise HTTPException(
+                    status_code=422, detail="Invalid encoded scraping request."
+                ) from exc
+
         if request.app.state.configuration_error:
             return {
                 "status": "misconfigured",
@@ -169,27 +202,7 @@ def create_app(manager: JobManager | None = None) -> FastAPI:
         status_code=status.HTTP_202_ACCEPTED,
     )
     async def create_job(payload: JobCreateRequest, request: Request):
-        if request.app.state.configuration_error or request.app.state.job_manager is None:
-            raise HTTPException(
-                status_code=500,
-                detail=(
-                    "Backend configuration error: "
-                    + (
-                        request.app.state.configuration_error
-                        or "job manager is not available"
-                    )
-                ),
-            )
-        try:
-            job = await request.app.state.job_manager.submit(
-                payload.links,
-                payload.start_date,
-                payload.end_date,
-                run_immediately=run_jobs_immediately(),
-            )
-        except ScrapeInputError as exc:
-            raise HTTPException(status_code=422, detail=str(exc)) from exc
-        return job.as_dict()
+        return await submit_job(payload, request)
 
     @app.get("/{job_id}", response_model=JobResponse)
     @app.get("/jobs/{job_id}", response_model=JobResponse)
