@@ -75,6 +75,17 @@ class JobManagerTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(self.scraper.max_active, 1)
 
+    async def test_can_run_job_immediately_for_serverless(self):
+        job = await self.manager.submit(
+            ["https://t.me/example"],
+            datetime(2026, 6, 1),
+            datetime(2026, 6, 2),
+            run_immediately=True,
+        )
+
+        self.assertEqual(job.status, JobStatus.COMPLETED)
+        self.assertEqual(job.rows_appended, 1)
+
     async def test_records_service_failure_for_status_polling(self):
         await self.manager.stop()
         manager = JobManager(FakeScraper(should_fail=True), FakeWriter())

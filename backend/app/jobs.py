@@ -101,7 +101,11 @@ class JobManager:
         self._worker_task = None
 
     async def submit(
-        self, links: Sequence[str], start_date: datetime, end_date: datetime
+        self,
+        links: Sequence[str],
+        start_date: datetime,
+        end_date: datetime,
+        run_immediately: bool = False,
     ) -> ScrapeJob:
         normalized_links = normalize_telegram_links(links, self.max_links)
         start_local, end_local = localize_date_window(
@@ -115,7 +119,10 @@ class JobManager:
         )
         self._log(job, "info", f"Job queued with {len(normalized_links)} link(s).")
         self.jobs[job.id] = job
-        await self._queue.put(job.id)
+        if run_immediately:
+            await self._execute(job)
+        else:
+            await self._queue.put(job.id)
         return job
 
     def get(self, job_id: str) -> ScrapeJob:

@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 from unittest.mock import patch
 import unittest
 
-from app.api import allowed_cors_origins, create_app
+from app.api import allowed_cors_origins, create_app, run_jobs_immediately
 from app.jobs import JobManager
 from app.scraper.sheets import SheetWriteResult
 
@@ -73,6 +73,10 @@ class ApiTests(unittest.TestCase):
                 allowed_cors_origins(),
                 ["https://portal.vercel.app", "http://localhost:5173"],
             )
+
+    def test_reads_serverless_job_mode_from_env(self):
+        with patch.dict("os.environ", {"SERVERLESS_SYNC_JOBS": "true"}):
+            self.assertTrue(run_jobs_immediately())
 
 
 if __name__ == "__main__":

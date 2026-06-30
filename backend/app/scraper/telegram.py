@@ -9,6 +9,7 @@ from typing import Any
 
 from telethon import TelegramClient
 from telethon.errors import FloodWaitError, RPCError
+from telethon.sessions import StringSession
 from telethon.tl.functions.messages import GetHistoryRequest
 from telethon.tl.types import PeerChannel, PeerChat, PeerUser
 
@@ -113,8 +114,13 @@ class TelegramScraper:
             self._sender_cache.clear()
             self._emit(progress, type="started", total_links=len(normalized_links))
 
+            session = (
+                StringSession(self.settings.telegram_session_string)
+                if self.settings.telegram_session_string
+                else str(self.settings.telegram_session_path)
+            )
             client = TelegramClient(
-                str(self.settings.telegram_session_path),
+                session,
                 self.settings.telegram_api_id,
                 self.settings.telegram_api_hash,
             )

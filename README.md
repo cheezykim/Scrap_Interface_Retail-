@@ -127,8 +127,10 @@ TELEGRAM_API_ID=12345678
 TELEGRAM_API_HASH=replace-with-api-hash
 TELEGRAM_PHONE_NUMBER=+855000000000
 TELEGRAM_SESSION_PATH=../tg_sessions/geo_scraper
+TELEGRAM_SESSION_STRING=replace-with-telethon-string-session
 
 GOOGLE_CREDENTIALS_PATH=../khemra_account.json
+GOOGLE_CREDENTIALS_JSON={"type":"service_account","project_id":"replace-me"}
 GOOGLE_SHEET_ID=replace-with-spreadsheet-id
 GOOGLE_WORKSHEET_NAME=Retail_Banking
 
@@ -137,6 +139,7 @@ SCRAPER_HISTORY_LIMIT=100
 SCRAPER_MAX_LINKS=100
 
 BACKEND_CORS_ORIGINS=http://localhost:5173,https://your-project.vercel.app
+SERVERLESS_SYNC_JOBS=false
 ```
 
 Configuration meaning:
@@ -145,43 +148,69 @@ Configuration meaning:
 - `TELEGRAM_API_HASH`: Telegram API hash for the backend account.
 - `TELEGRAM_PHONE_NUMBER`: phone number used for the Telegram session.
 - `TELEGRAM_SESSION_PATH`: where the Telegram login session is stored.
+- `TELEGRAM_SESSION_STRING`: Telethon string session for Vercel/serverless hosting.
 - `GOOGLE_CREDENTIALS_PATH`: Google service-account JSON file path.
+- `GOOGLE_CREDENTIALS_JSON`: Google service-account JSON contents for Vercel/serverless hosting.
 - `GOOGLE_SHEET_ID`: ID from the Google Sheet URL.
 - `GOOGLE_WORKSHEET_NAME`: worksheet/tab name to write into.
 - `SCRAPER_TIMEZONE`: timezone used for date filtering.
 - `SCRAPER_HISTORY_LIMIT`: Telegram message batch limit.
 - `SCRAPER_MAX_LINKS`: maximum Telegram links per job.
 - `BACKEND_CORS_ORIGINS`: frontend URLs that are allowed to call the backend.
+- `SERVERLESS_SYNC_JOBS`: set to `true` on Vercel so jobs run inside the API request.
 
 Important:
 
 - The Google service account must have edit access to the destination Google Sheet.
 - The Telegram account must have access to the channels/groups being scraped.
-- Never put Telegram or Google credentials into the frontend.
+- Never put Telegram or Google credentials into frontend source code.
 
-## Deploy Frontend To Vercel
+## Deploy Frontend And Backend To Vercel
 
-The repository includes `vercel.json`, so Vercel can build the frontend from this repo root.
+The repository includes:
+
+- `vercel.json` for the Vite frontend and Python API routing.
+- `api/index.py` as the Vercel serverless FastAPI entrypoint.
+- `requirements.txt` so Vercel installs backend Python dependencies.
+- `.env.vercel.example` as the Vercel environment template.
 
 In Vercel:
 
 1. Import `https://github.com/cheezykim/Scrap_Interface_Retail-.git`.
 2. Keep the project root as the repository root.
-3. Add this environment variable from `.env.vercel.example`:
+3. Add the environment variables from `.env.vercel.example`.
+4. Leave `VITE_API_URL` empty so the frontend calls the same Vercel project at `/api`.
+5. Deploy.
 
 ```env
-VITE_API_URL=https://your-backend-api.example.com
+VITE_API_URL=
+TELEGRAM_API_ID=12345678
+TELEGRAM_API_HASH=replace-with-api-hash
+TELEGRAM_PHONE_NUMBER=+855000000000
+TELEGRAM_SESSION_STRING=replace-with-telethon-string-session
+GOOGLE_CREDENTIALS_JSON={"type":"service_account","project_id":"replace-me"}
+GOOGLE_SHEET_ID=replace-with-spreadsheet-id
+GOOGLE_WORKSHEET_NAME=Retail_Banking
+SCRAPER_TIMEZONE=Asia/Phnom_Penh
+SCRAPER_HISTORY_LIMIT=100
+SCRAPER_MAX_LINKS=100
+SERVERLESS_SYNC_JOBS=true
 ```
 
-4. Deploy.
+To create `TELEGRAM_SESSION_STRING`, first authorize the Telegram account locally with the file session, then run:
 
-After Vercel gives you a production URL, add it to the backend environment:
-
-```env
-BACKEND_CORS_ORIGINS=http://localhost:5173,https://your-project.vercel.app
+```powershell
+cd C:\Users\sombath.kim\Documents\Retail_Banking_interface\backend
+python scripts\export_telegram_session.py
 ```
 
-Important: this app's backend uses Telegram sessions and an in-memory background job worker, so host the backend on a normal Python server such as Render, Railway, Fly.io, a VM, or an internal server. Use the hosted backend URL as `VITE_API_URL` in Vercel.
+Copy the printed value into Vercel as `TELEGRAM_SESSION_STRING`.
+
+Vercel serverless note:
+
+- Jobs run inside the API request when `SERVERLESS_SYNC_JOBS=true`.
+- Long Telegram scrapes can hit Vercel function duration limits.
+- For heavy production use, the same backend code will still run better on a persistent Python server, but the project is now configured to deploy both frontend and backend on Vercel.
 
 ## Run Locally
 

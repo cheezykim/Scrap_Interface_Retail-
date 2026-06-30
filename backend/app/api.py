@@ -39,6 +39,15 @@ def allowed_cors_origins() -> list[str]:
     return origins or ["http://localhost:5173"]
 
 
+def run_jobs_immediately() -> bool:
+    """Use request-bound execution for serverless hosts that freeze background tasks."""
+    return os.environ.get("SERVERLESS_SYNC_JOBS", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+
+
 class JobCreateRequest(BaseModel):
     links: list[str] = Field(min_length=1)
     start_date: datetime
@@ -114,7 +123,10 @@ def create_app(manager: JobManager | None = None) -> FastAPI:
     async def create_job(payload: JobCreateRequest, request: Request):
         try:
             job = await request.app.state.job_manager.submit(
-                payload.links, payload.start_date, payload.end_date
+                payload.links,
+                payload.start_date,
+                payload.end_date,
+                run_immediately=run_jobs_immediately(),
             )
         except ScrapeInputError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
