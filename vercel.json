@@ -5,6 +5,22 @@
   "outputDirectory": "frontend/dist",
   "routes": [
     {
+      "src": "/api/health",
+      "dest": "/api/health.py"
+    },
+    {
+      "src": "/api/jobs",
+      "dest": "/api/jobs.py"
+    },
+    {
+      "src": "/api/jobs/(.*)",
+      "dest": "/api/jobs/[job_id].py"
+    },
+    {
+      "src": "/api",
+      "dest": "/api/index.py"
+    },
+    {
       "handle": "filesystem"
     },
     {

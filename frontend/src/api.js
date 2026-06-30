@@ -3,7 +3,7 @@ const API_URL = (import.meta.env.VITE_API_URL || "").replace(
   "",
 );
 
-async function request(path, options = {}, fallbackPath = "") {
+async function request(path, options = {}, fallbackPaths = []) {
   let response;
   try {
     response = await fetch(`${API_URL}${path}`, {
@@ -21,8 +21,9 @@ async function request(path, options = {}, fallbackPath = "") {
   } catch {
     data = {};
   }
-  if (!response.ok && response.status === 405 && fallbackPath) {
-    return request(fallbackPath, options);
+  if (!response.ok && [404, 405].includes(response.status) && fallbackPaths.length) {
+    const [nextPath, ...remainingPaths] = fallbackPaths;
+    return request(nextPath, options, remainingPaths);
   }
   if (!response.ok) {
     const detail = Array.isArray(data.detail)
@@ -37,9 +38,9 @@ export function submitJob(payload) {
   return request("/api/jobs", {
     method: "POST",
     body: JSON.stringify(payload),
-  }, "/api");
+  }, ["/api/jobs.py", "/api"]);
 }
 
 export function getJob(jobId) {
-  return request(`/api/jobs/${jobId}`);
+  return request(`/api/jobs/${jobId}`, {}, [`/api/jobs/${jobId}.py`]);
 }

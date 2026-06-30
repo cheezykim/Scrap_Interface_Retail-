@@ -117,6 +117,7 @@ def create_app(manager: JobManager | None = None) -> FastAPI:
 
     @app.get("/")
     @app.get("/health")
+    @app.get("/api/health.py")
     @app.get("/api/health")
     async def health(request: Request) -> dict[str, str]:
         if request.app.state.configuration_error:
@@ -139,6 +140,16 @@ def create_app(manager: JobManager | None = None) -> FastAPI:
     )
     @app.post(
         "/api",
+        response_model=JobResponse,
+        status_code=status.HTTP_202_ACCEPTED,
+    )
+    @app.post(
+        "/api/jobs.py",
+        response_model=JobResponse,
+        status_code=status.HTTP_202_ACCEPTED,
+    )
+    @app.post(
+        "/api/index.py",
         response_model=JobResponse,
         status_code=status.HTTP_202_ACCEPTED,
     )
