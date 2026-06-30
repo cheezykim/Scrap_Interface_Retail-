@@ -46,6 +46,25 @@ class ApiTests(unittest.TestCase):
         self.assertIn(response.json()["status"], ("queued", "running", "completed"))
         self.assertEqual(response.json()["links"], ["https://t.me/example"])
 
+    def test_submits_job_on_vercel_stripped_paths(self):
+        payload = {
+            "links": ["https://t.me/example"],
+            "start_date": "2026-06-01T00:00:00",
+            "end_date": "2026-06-02T00:00:00",
+        }
+
+        root_response = self.client.post("/", json=payload)
+        jobs_response = self.client.post("/jobs", json=payload)
+
+        self.assertEqual(root_response.status_code, 202)
+        self.assertEqual(jobs_response.status_code, 202)
+
+    def test_reads_health_on_vercel_stripped_path(self):
+        response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["worker"], "ready")
+
     def test_rejects_invalid_link(self):
         response = self.client.post(
             "/api/jobs",

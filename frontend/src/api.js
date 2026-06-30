@@ -3,7 +3,7 @@ const API_URL = (import.meta.env.VITE_API_URL || "").replace(
   "",
 );
 
-async function request(path, options = {}) {
+async function request(path, options = {}, fallbackPath = "") {
   let response;
   try {
     response = await fetch(`${API_URL}${path}`, {
@@ -21,6 +21,9 @@ async function request(path, options = {}) {
   } catch {
     data = {};
   }
+  if (!response.ok && response.status === 405 && fallbackPath) {
+    return request(fallbackPath, options);
+  }
   if (!response.ok) {
     const detail = Array.isArray(data.detail)
       ? data.detail.map((item) => item.msg).join(" ")
@@ -34,7 +37,7 @@ export function submitJob(payload) {
   return request("/api/jobs", {
     method: "POST",
     body: JSON.stringify(payload),
-  });
+  }, "/api");
 }
 
 export function getJob(jobId) {

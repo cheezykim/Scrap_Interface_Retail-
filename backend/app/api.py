@@ -115,6 +115,8 @@ def create_app(manager: JobManager | None = None) -> FastAPI:
         allow_headers=["Content-Type"],
     )
 
+    @app.get("/")
+    @app.get("/health")
     @app.get("/api/health")
     async def health(request: Request) -> dict[str, str]:
         if request.app.state.configuration_error:
@@ -125,6 +127,21 @@ def create_app(manager: JobManager | None = None) -> FastAPI:
             }
         return {"status": "ok", "worker": "ready"}
 
+    @app.post(
+        "/",
+        response_model=JobResponse,
+        status_code=status.HTTP_202_ACCEPTED,
+    )
+    @app.post(
+        "/jobs",
+        response_model=JobResponse,
+        status_code=status.HTTP_202_ACCEPTED,
+    )
+    @app.post(
+        "/api",
+        response_model=JobResponse,
+        status_code=status.HTTP_202_ACCEPTED,
+    )
     @app.post(
         "/api/jobs",
         response_model=JobResponse,
@@ -153,8 +170,21 @@ def create_app(manager: JobManager | None = None) -> FastAPI:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         return job.as_dict()
 
+    @app.get("/{job_id}", response_model=JobResponse)
+    @app.get("/jobs/{job_id}", response_model=JobResponse)
     @app.get("/api/jobs/{job_id}", response_model=JobResponse)
     async def get_job(job_id: str, request: Request):
+        if request.app.state.configuration_error or request.app.state.job_manager is None:
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "Backend configuration error: "
+                    + (
+                        request.app.state.configuration_error
+                        or "job manager is not available"
+                    )
+                ),
+            )
         try:
             return request.app.state.job_manager.get(job_id).as_dict()
         except JobNotFoundError as exc:
