@@ -135,6 +135,8 @@ GOOGLE_WORKSHEET_NAME=Retail_Banking
 SCRAPER_TIMEZONE=Asia/Phnom_Penh
 SCRAPER_HISTORY_LIMIT=100
 SCRAPER_MAX_LINKS=100
+
+BACKEND_CORS_ORIGINS=http://localhost:5173,https://your-project.vercel.app
 ```
 
 Configuration meaning:
@@ -149,12 +151,37 @@ Configuration meaning:
 - `SCRAPER_TIMEZONE`: timezone used for date filtering.
 - `SCRAPER_HISTORY_LIMIT`: Telegram message batch limit.
 - `SCRAPER_MAX_LINKS`: maximum Telegram links per job.
+- `BACKEND_CORS_ORIGINS`: frontend URLs that are allowed to call the backend.
 
 Important:
 
 - The Google service account must have edit access to the destination Google Sheet.
 - The Telegram account must have access to the channels/groups being scraped.
 - Never put Telegram or Google credentials into the frontend.
+
+## Deploy Frontend To Vercel
+
+The repository includes `vercel.json`, so Vercel can build the frontend from this repo root.
+
+In Vercel:
+
+1. Import `https://github.com/cheezykim/Scrap_Interface_Retail-.git`.
+2. Keep the project root as the repository root.
+3. Add this environment variable from `.env.vercel.example`:
+
+```env
+VITE_API_URL=https://your-backend-api.example.com
+```
+
+4. Deploy.
+
+After Vercel gives you a production URL, add it to the backend environment:
+
+```env
+BACKEND_CORS_ORIGINS=http://localhost:5173,https://your-project.vercel.app
+```
+
+Important: this app's backend uses Telegram sessions and an in-memory background job worker, so host the backend on a normal Python server such as Render, Railway, Fly.io, a VM, or an internal server. Use the hosted backend URL as `VITE_API_URL` in Vercel.
 
 ## Run Locally
 

@@ -2,6 +2,7 @@
 
 from contextlib import asynccontextmanager
 from datetime import datetime
+import os
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request, status
@@ -17,8 +18,6 @@ from .scraper.validation import ScrapeInputError
 
 def remove_dead_local_proxy() -> None:
     """Ignore Codex/local dead-end proxy values inherited by network clients."""
-    import os
-
     dead_proxy_values = {"http://127.0.0.1:9", "https://127.0.0.1:9"}
     proxy_names = (
         "HTTP_PROXY",
@@ -31,6 +30,13 @@ def remove_dead_local_proxy() -> None:
     for name in proxy_names:
         if os.environ.get(name, "").strip().lower() in dead_proxy_values:
             os.environ.pop(name, None)
+
+
+def allowed_cors_origins() -> list[str]:
+    """Read allowed browser origins from env, keeping localhost for development."""
+    configured = os.environ.get("BACKEND_CORS_ORIGINS", "")
+    origins = [origin.strip().rstrip("/") for origin in configured.split(",") if origin.strip()]
+    return origins or ["http://localhost:5173"]
 
 
 class JobCreateRequest(BaseModel):
@@ -90,7 +96,7 @@ def create_app(manager: JobManager | None = None) -> FastAPI:
     )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:5173"],
+        allow_origins=allowed_cors_origins(),
         allow_credentials=False,
         allow_methods=["GET", "POST"],
         allow_headers=["Content-Type"],

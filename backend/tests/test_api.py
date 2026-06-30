@@ -1,7 +1,8 @@
 from fastapi.testclient import TestClient
+from unittest.mock import patch
 import unittest
 
-from app.api import create_app
+from app.api import allowed_cors_origins, create_app
 from app.jobs import JobManager
 from app.scraper.sheets import SheetWriteResult
 
@@ -62,6 +63,16 @@ class ApiTests(unittest.TestCase):
         response = self.client.get("/api/jobs/missing")
 
         self.assertEqual(response.status_code, 404)
+
+    def test_reads_cors_origins_from_env(self):
+        with patch.dict(
+            "os.environ",
+            {"BACKEND_CORS_ORIGINS": "https://portal.vercel.app, http://localhost:5173/"},
+        ):
+            self.assertEqual(
+                allowed_cors_origins(),
+                ["https://portal.vercel.app", "http://localhost:5173"],
+            )
 
 
 if __name__ == "__main__":
