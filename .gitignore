@@ -1,0 +1,14 @@
+.env
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+tg_sessions/*.session*
+khemra_account.json
+khemra_account*.json
+*.log
+backend/.env
+frontend/node_modules/
+frontend/dist/
+Retail_Banking_interface/
