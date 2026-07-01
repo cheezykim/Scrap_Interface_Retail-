@@ -16,6 +16,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { getJob, submitJob } from "./api";
+import chipMongLogo from "./assets/chip-mong-logo.png";
 
 const TERMINAL_STATUSES = new Set(["completed", "failed"]);
 const MAX_LINKS = 100;
@@ -151,7 +152,7 @@ function App() {
       <header className="hero">
         <nav className="topbar" aria-label="Primary navigation">
           <div className="brand">
-            <span className="brand-mark" aria-hidden="true">CM</span>
+            <img className="brand-mark" src={chipMongLogo} alt="Chip Mong logo" />
             <span><strong>CHIP MONG</strong><small>RETAIL BANKING</small></span>
           </div>
           <div className="secure-label"><ShieldCheck size={17} /> Secure internal portal</div>

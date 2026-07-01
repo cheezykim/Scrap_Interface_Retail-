@@ -35,7 +35,7 @@ button:disabled, input:disabled { cursor: not-allowed; opacity: .62; }
 
 .topbar { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2; }
 .brand { display: flex; align-items: center; gap: 13px; letter-spacing: .05em; }
-.brand-mark { width: 54px; height: 54px; display: grid; place-items: center; border-radius: 18px; background: white; color: var(--pink-dark); font: 800 16px/1 Manrope, sans-serif; box-shadow: 0 10px 30px #59102c35; }
+.brand-mark { width: 54px; height: 54px; display: block; border-radius: 18px; object-fit: cover; box-shadow: 0 10px 30px #59102c35; }
 .brand strong, .brand small { display: block; }
 .brand strong { font: 800 15px/1.2 Manrope, sans-serif; }
 .brand small { font-size: 9px; opacity: .76; margin-top: 4px; letter-spacing: .16em; }
