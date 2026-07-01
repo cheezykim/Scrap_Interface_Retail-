@@ -172,13 +172,12 @@ The repository includes:
 - `vercel.json` for the Vite frontend and Python API routing.
 - `api/index.py` as the Vercel serverless FastAPI entrypoint.
 - `requirements.txt` so Vercel installs backend Python dependencies.
-- `.env.vercel.example` as the Vercel environment template.
 
 In Vercel:
 
 1. Import `https://github.com/cheezykim/Scrap_Interface_Retail-.git`.
 2. Keep the project root as the repository root.
-3. Add the environment variables from `.env.vercel.example`.
+3. Add the environment variables listed below in Vercel Project Settings.
 4. Leave `VITE_API_URL` empty so the frontend calls the same Vercel project at `/api`.
 5. Deploy.
 

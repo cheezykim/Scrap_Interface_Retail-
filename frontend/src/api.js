@@ -35,9 +35,9 @@ async function request(path, options = {}, fallbackPaths = []) {
 }
 
 export function submitJob(payload) {
-  const encodedPayload = encodeURIComponent(JSON.stringify(payload));
-  return request(`/api/health?job_payload=${encodedPayload}&_=${Date.now()}`, {
-    method: "GET",
+  return request("/api/jobs", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }
 
